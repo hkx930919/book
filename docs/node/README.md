@@ -1,3 +1,7 @@
+---
+sidebar: auto
+---
+
 # node
 
 ## mongodb 下载

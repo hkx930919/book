@@ -1,4 +1,4 @@
-module.exports = {
+let config = {
   // 页面标题
   title: '日常所得',
   // 网页描述
@@ -15,7 +15,15 @@ module.exports = {
     // 最后更新时间
     lastUpdated: '最后更新时间',
     // 所有页面自动生成侧边栏
-    sidebar: 'auto',
+    // sidebar: 'auto',
+    sidebar: [
+      {
+        title: '前端',
+        path: '/front-docs/',
+        collapsable: false,
+        children: ['vue', 'webpack']
+      }
+    ],
     // 仓库地址
     repo: 'https://github.com/hkx930919/book',
     // 仓库链接label
@@ -26,7 +34,7 @@ module.exports = {
     editLinkText: '编辑此页',
     // 导航
     nav: [
-      { text: 'webpack', link: '/webpack/' },
+      { text: '前端', link: '/front-docs/' },
       { text: 'nodejs', link: '/node/' },
       { text: 'react-native', link: '/react-native/' }
     ]
@@ -40,3 +48,17 @@ module.exports = {
     }
   }
 }
+const hasSidebar = config.themeConfig && config.themeConfig.sidebar
+if (hasSidebar) {
+  const sidebar = config.themeConfig.sidebar.map(value => {
+    if (value.hasOwnProperty('children') && value.hasOwnProperty('path')) {
+      return {
+        ...value,
+        children: value.children.map(child => `${value.path}${child}`)
+      }
+    }
+    return value
+  })
+  config.themeConfig.sidebar = sidebar
+}
+module.exports = config
