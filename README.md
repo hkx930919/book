@@ -14,8 +14,10 @@ npm run dev
 
 # 打包压缩
 npm run build
-## 发布、
+
+## 发布
 在git上运行deploy.sh文件
 
-[文档 地址](https://hkx930919.github.io/book-view/)
 ```
+
+[文档 地址](https://hkx930919.github.io/book-view/)
