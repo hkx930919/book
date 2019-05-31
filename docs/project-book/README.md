@@ -24,7 +24,7 @@ iOS11 新增特性，Webkit 的一个 CSS 函数，用于设定安全区域与�
 - safe-area-inset-top：安全区域距离顶部边界距离
 - safe-area-inset-bottom：安全区域距离底部边界距离
 
-> 适配底部 fixed 元素的 tabbar 时，使用 safe-area-inset-bottom 这个变量，因为它对应的就是小黑条的高度
+> 适配底部 fixed 元素的 tabbar 时，使用 safe-area-inset-bottom 这个变量，因为它对应的就是小黑条的高度 <br>
 > _注意：当 viewport-fit=contain 时 env() 是不起作用的，必须要配合 viewport-fit=cover 使用。对于不支持 env() 的浏览器，浏览器将会忽略它。_
 
 ```css
