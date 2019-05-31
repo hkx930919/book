@@ -1,5 +1,7 @@
 let config = {
   // 页面标题
+  base: '/book-view/',
+
   title: '日常所得',
   // 网页描述
   description: '一个前端的个人站点',
