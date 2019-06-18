@@ -4,10 +4,9 @@ sidebar: auto
 
 # node
 
-## mongodb 下载
+## 1 mongodb 下载
 
 [下载地址](https://docs.mongodb.com/manual/installation/?_ga=2.102415241.921380577.1557825289-35976773.1557825287)
-_todo:将安装包上传到网盘_
 
 - 1 设置 path 环境变量，设置完成可以可以使用 mongo 命令
 
@@ -230,3 +229,5 @@ _todo:将安装包上传到网盘_
         return data
       }
       ```
+# 2 JWT
+##

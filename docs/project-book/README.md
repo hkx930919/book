@@ -4,7 +4,7 @@ sidebar: auto
 
 # 踩坑记录
 
-## H5 页面适配 IPHONEX
+## 1. H5 页面适配 IPHONEX
 
 > iphonex 取消了物理按键，改成底部小黑条。
 > ios11 新增特性，苹果公司为了适配 iPhoneX 对现有 viewport meta 标签的一个扩展,
@@ -24,8 +24,7 @@ iOS11 新增特性，Webkit 的一个 CSS 函数，用于设定安全区域与�
 - safe-area-inset-top：安全区域距离顶部边界距离
 - safe-area-inset-bottom：安全区域距离底部边界距离
 
-> 适配底部 fixed 元素的 tabbar 时，使用 safe-area-inset-bottom 这个变量，因为它对应的就是小黑条的高度 <br>
-> _注意：当 viewport-fit=contain 时 env() 是不起作用的，必须要配合 viewport-fit=cover 使用。对于不支持 env() 的浏览器，浏览器将会忽略它。_
+> 适配底部 fixed 元素的 tabbar 时，使用 safe-area-inset-bottom 这个变量，因为它对应的就是小黑条的高度 <br> > _注意：当 viewport-fit=contain 时 env() 是不起作用的，必须要配合 viewport-fit=cover 使用。对于不支持 env() 的浏览器，浏览器将会忽略它。_
 
 ```css
 padding-bottom: constant(
@@ -82,4 +81,74 @@ body {
   height: calc(60px (假设值) + constant(safe-area-inset-bottom));
   height: calc(60px (假设值) + env(safe-area-inset-bottom));
 }
+```
+
+## 2. 苹果微信浏览器滑动，出现网站标识
+
+> 微信自带浏览器往下拖动会动态查看网页网址，影响网页的用户体验，尤其是苹果小屏手机，滑动列表页时，因为这个默认行为导致滑动不顺畅。<br>
+> 可以在 _touchstart touchmove_ 事件中**阻止默认行为**解决该问题
+
+网上搜索的一种方法：
+
+```js
+/**
+ * 这种方法的缺点是如果有多个地方滚动，那么就要在这些容器上调用overscroll方法
+ */
+const overscroll = function(el) {
+  el.addEventListener('touchstart', function() {
+    var top = el.scrollTop,
+      totalScroll = el.scrollHeight,
+      currentScroll = top + el.offsetHeight
+    // 顶部下滑
+    if (top === 0) {
+      el.scrollTop = 1
+    } else if (currentScroll === totalScroll) {
+      // 底部赏花
+      el.scrollTop = top - 1
+    }
+  })
+  el.addEventListener('touchmove', function(evt) {
+    if (el.offsetHeight < el.scrollHeight) evt._isScroller = true
+  })
+}
+
+overscroll(document.querySelector('.scroll'))
+document.body.addEventListener('touchmove', function(evt) {
+  if (!evt._isScroller) {
+    evt.preventDefault()
+  }
+})
+```
+
+如果只是单页面某个路由控制这问题，参考以下：
+
+```js
+// mounted
+this.$el.addEventListener('touchstart', this.handleTouchStart)
+this.$el.addEventListener('touchmove', this.handleTouchMove)
+
+// start
+handleTouchStart(e) {
+      this.startY = e.touches[0].pageY
+    },
+// move 中间有个坑，如果在start 和move 事件中阻止冒泡（e.stopPropagation()），那么会导致用了fastclick的dom上监听click事件失效
+handleTouchMove(e) {
+    const endY = e.changedTouches[0].pageY
+    const changedY = endY - this.startY
+    const scroll_top = this.$el.scrollTop
+    // 判断是否在顶部，且向下拖动
+    if (scroll_top === 0 && changedY > 0) {
+    e.preventDefault()
+    }
+    // 判断是否在底部，且向上拖动
+    const totalScroll = this.$el.scrollHeight
+    const currentScroll = scroll_top + this.$el.offsetHeight
+    if (currentScroll === totalScroll && changedY < 0) {
+    e.preventDefault()
+    }
+},
+
+// unmounted
+this.$el.removeEventListener('touchstart', this.handleTouchStart)
+this.$el.removeEventListener('touchmove', this.handleTouchMove)
 ```
