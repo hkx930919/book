@@ -39,14 +39,16 @@ let config = {
       { text: '前端', link: '/front-docs/' },
       { text: 'nodejs', link: '/node/' },
       { text: 'react-native', link: '/react-native/' },
-      { text: '踩坑记录', link: '/project-book/' }
+      { text: '踩坑记录', link: '/project-book/' },
+      { text: 'linux及自动化构建', link: '/linux/' }
     ]
   },
   configureWebpack: {
     resolve: {
       // 静态资源的别名
       alias: {
-        '@vue': '../images/vue'
+        '@linux': './public/linux',
+        '@node': './public/node'
       }
     }
   }
