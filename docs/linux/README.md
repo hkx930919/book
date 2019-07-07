@@ -72,3 +72,93 @@ git push 触发钩子后，jenkins 就要开始工作了，自动化的构建任
   ![java-list](~./images/jenkins-autobuild.png)
 - 3.3 点击构建，把要执行的命令输进去，多个命令使用&&分开。
   ![java-list](~./images/jenkins-build-shell.png)
+
+## 4 实现自动化部署
+
+自动化部署可能是我们最需要的功能了，公司就一台服务器，我们可以使用人工部署的方式，但是如果公司有 100 台服务器呢，人工部署就有些吃力了，而且一旦线上出了问题，回滚也很麻烦。所以这一节实现一下自动部署的功能。
+
+1. 首先，先在 Jenkins 上装一个插件 Publish Over SSH，我们将通过这个工具实现服务器部署功能。
+2. 在要部署代码的服务器上创建一个文件夹用于接收 Jenkins 传过来的代码，我在服务器上建了一个 testjenkins 的文件夹。
+3. Jenkins 想要往服务器上部署代码必须登录服务器才可以，这里有两种登录验证方式，一种是 ssh 验证，一种是密码验证，就像你自己登录你的服务器，你可以使用 ssh 免密登录，也可以每次输密码登录，系统管理-系统设置里找到 Publish over SSH 这一项。
+   重点参数说明：
+
+   ```
+    Passphrase：密码（key的密码，没设置就是空）
+    Path to key：key文件（私钥）的路径
+    Key：将私钥复制到这个框中(path to key和key写一个即可)
+       SSH Servers 的配置：
+    SSH Server Name：标识的名字（随便你取什么）
+    Hostname：需要连接 ssh 的主机名或 ip 地址（建议 ip）
+    Username：用户名
+    Remote Directory：远程目录（上面第二步建的 testjenkins 文件夹的路径）
+
+    高级配置：
+    Use password authentication, or use a different key：勾选这个可以使用密码登录，不想配 ssh 的可以用这个先试试
+    Passphrase / Password：密码登录模式的密码
+    Port：端口（默认 22）
+    Timeout (ms)：超时时间（毫秒）默认 300000
+   ```
+
+   配置完成后，点击 Test Configuration 测试一下是否可以连接上，如果成功会返回 success，失败会返回报错信息，根据报错信息改正即可。
+   ![java-list](~./images/jenkins-ssh.png)
+
+4. 接下来进入我们创建的任务，点击构建，增加 2 行代码，意思是将 dist 里面的东西打包成一个文件，因为我们要传输。
+
+   ```
+   cd dist&&
+   tar -zcvf dist.tar.gz *
+   ```
+
+   ![java-list](~./images/jenkins-shh-step.png)
+
+5. 点击构建后操作，增加构建后操作步骤，选择 send build artificial over SSH， 参数说明：
+
+   ```
+   Name:选择一个你配好的ssh服务器
+   Source files ：写你要传输的文件路径
+   Remove prefix ：要去掉的前缀，不写远程服务器的目录结构将和Source files写的一致
+   Remote directory ：写你要部署在远程服务器的那个目录地址下，不写就是SSH Servers配置里默认远程目录
+   Exec command ：传输完了要执行的命令，我这里执行了解压缩和解压缩完成后删除压缩包2个命令
+
+   ```
+
+   ![java-list](~./images/jenkins-push-run.png)
+
+6. 现在当我们在本地将 Welcome to Your Vue.js App 修改为 Jenkins 后发出一个 git push，过一会就会发现我们的服务器上已经部署好了最新的代码
+
+## 5 安裝 nginx
+
+```
+nginx -v  //输入查看
+```
+
+1. 安装 nginx
+
+   ```
+   yum install nginx //输入下载
+   or
+   yum install epel-release //如果上一步安装失败
+   yum install nginx //再次下载
+   ```
+
+   ![java-list](~./images/nginx-install.png)
+
+2. 安装完毕后,修改 nginx 配置
+   ```
+   nginx -t //查看配置文件地址
+   cd /etc/nginx
+   ls //可以看到 nginx.conf 配置文件
+   ```
+   ![java-list](~./images/nginx-config.png)
+   ```
+   // 编辑配置文件
+   vim nginx.conf
+   or
+   yum install vim //如果没有可以安装vim 再次执行上步
+   ```
+3. 修改用户名和默认的存放地址
+
+   > 修改配置 user 改成 root (服务器用户名 我的是 root)
+
+   ![java-list](~./images/nginx-config-user.png)
+   ![java-list](~./images/nginx-location.png)
