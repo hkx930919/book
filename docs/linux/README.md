@@ -162,3 +162,22 @@ nginx -v  //输入查看
 
    ![java-list](~./images/nginx-config-user.png)
    ![java-list](~./images/nginx-location.png)
+
+## 6 安装 nginx 后配置 jenkins 配置
+
+最后将 jenkins 项目配置改成如下,即可完成在该服务器的自动部署
+
+```
+npm config set registry http://registry.npm.taobao.org/ &&
+npm install&&
+npm run build &&
+rm -rf /root/www/book-view/* &&
+mv docs/.vuepress/dist/* /root/www/book-view
+```
+
+## 7 参考文章
+
+[jenkins +nginx 搭建前端构建环境](https://juejin.im/post/5b371678f265da599f68dfa2)<br>
+[实战笔记：Jenkins 打造强大的前端自动化工作流](https://juejin.im/post/5ad1980e6fb9a028c42ea1be)<br>
+[在 linux 服务器上安装 Jenkins](https://www.jianshu.com/p/c517f09df025)<br>
+[在 linux 服务器上安装 jdk](https://www.jianshu.com/p/10949f44ce9c)<br>
