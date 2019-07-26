@@ -1,4 +1,4 @@
-# vue
+<!-- # vue
 
 ## 1 Vue.extend 方法使用
 
@@ -36,4 +36,4 @@ Loading.close = function() {
 }
 
 export default Loading
-```
+``` -->

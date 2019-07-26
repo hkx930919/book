@@ -23,7 +23,7 @@ let config = {
         title: '前端',
         path: '/front-docs/',
         collapsable: false,
-        children: ['vue', 'webpack']
+        children: ['vue', 'webpack','cli']
       }
     ],
     // 仓库地址
