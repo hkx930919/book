@@ -226,3 +226,28 @@ video.addEventListener(
 ### 4 参考文章
 
 [视频播放--踩坑小计 ](https://juejin.im/post/5b189712f265da6e235488c1#heading-13)
+
+## 4 fastclick 在部分 ios 引起的问题
+
+在 ios11 以上的机型上，由于引入了 fastclick 导致点击 input 需要点好几次才能聚焦。由于 ios11 以上已经没有 300ms 的延迟，调用 fastclick 的 focus 方法不会聚焦，修改其原型方法。
+
+```js
+FastClick.prototype.focus = function(targetElement) {
+  let length
+
+  // Issue #160: on iOS 7, some input elements (e.g. date datetime month) throw a vague TypeError on setSelectionRange. These elements don't have an integer value for the selectionStart and selectionEnd properties, but unfortunately that can't be used for detection because accessing the properties also throws a TypeError. Just check the type instead. Filed as Apple bug #15122724.
+  if (
+    deviceIsIOS &&
+    targetElement.setSelectionRange &&
+    targetElement.type.indexOf('date') !== 0 &&
+    targetElement.type !== 'time' &&
+    targetElement.type !== 'month'
+  ) {
+    targetElement.focus()
+    length = targetElement.value.length
+    targetElement.setSelectionRange(length, length)
+  } else {
+    targetElement.focus()
+  }
+}
+```
