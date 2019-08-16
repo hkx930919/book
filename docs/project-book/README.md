@@ -251,3 +251,15 @@ FastClick.prototype.focus = function(targetElement) {
   }
 }
 ```
+
+### 4 参考文章
+
+[视频播放--踩坑小计 ](https://juejin.im/post/5b189712f265da6e235488c1#heading-13)
+
+## 5 input ui 修改问题
+
+类似于搜索的输入框，最好用个元素包裹下，给个 padding,不能让 input 的高度和包裹的父元素一样高，不然光标会很大很丑。
+
+## ios 微信浏览器滚动不流畅
+
+`-webkit-overflow-scrolling:touch`导致 ios 微信浏览器中滚动不流畅，父元素的 fixed，子元素也 fixed，也导致滚动不了。
