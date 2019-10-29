@@ -25,9 +25,13 @@ const getSideBar = () => {
         const { name } = path.parse(path.join(dirPath, file))
         return name.toUpperCase() === 'README' ? '' : name
       })
-
-    sideBar[`/${d}/`] = files
+      .sort()
+    if (files.some(v => v)) {
+      sideBar[`/${d}/`] = files
+    }
   })
+  console.log('---sideBar', sideBar)
+
   return sideBar
 }
 
@@ -50,11 +54,12 @@ let config = {
     // 最后更新时间
     lastUpdated: '最后更新时间',
     // 所有页面自动生成侧边栏
-    sidebar: {
-      '/linux/': ['', 'ssh'],
-      '/front-docs/': ['', 'vue', 'webpack', 'cli'],
-      '/': ['node', 'linux']
-    },
+    // sidebar: {
+    //   '/linux/': ['', 'ssh'],
+    //   '/front-docs/': ['', 'vue', 'webpack', 'cli'],
+    //   '/': ['node', 'linux']
+    // },
+    sidebar: getSideBar(),
     // 仓库地址
     repo: 'https://github.com/hkx930919/book',
     // 仓库链接label
@@ -82,5 +87,4 @@ let config = {
     }
   }
 }
-config.sidebar = getSideBar()
 module.exports = config
