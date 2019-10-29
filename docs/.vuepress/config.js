@@ -1,3 +1,36 @@
+const fs = require('fs-extra')
+const path = require('path')
+const getSideBar = () => {
+  const sideBar = {}
+  const DOCS_PATH = path.join(__dirname, '../../docs/')
+  const BLACK_LIST = ['.vuepress']
+  const dirs = fs
+    .readdirSync(DOCS_PATH)
+    .filter(v => !BLACK_LIST.includes(v))
+    .filter(p => {
+      const dirPath = path.join(DOCS_PATH, p)
+      return fs.statSync(dirPath).isDirectory()
+    })
+  console.log('---dirs', dirs)
+  dirs.forEach(d => {
+    const dirPath = path.join(DOCS_PATH, d)
+    const files = fs
+      .readdirSync(dirPath)
+      .filter(v => {
+        const isMd = v.toLowerCase().includes('md')
+        const filePath = path.join(dirPath, v)
+        return fs.statSync(filePath).isFile() && isMd
+      })
+      .map(file => {
+        const { name } = path.parse(path.join(dirPath, file))
+        return name.toUpperCase() === 'README' ? '' : name
+      })
+
+    sideBar[`/${d}/`] = files
+  })
+  return sideBar
+}
+
 let config = {
   // 页面标题
   base: '/book/',
@@ -17,15 +50,11 @@ let config = {
     // 最后更新时间
     lastUpdated: '最后更新时间',
     // 所有页面自动生成侧边栏
-    // sidebar: 'auto',
-    sidebar: [
-      {
-        title: '前端',
-        path: '/front-docs/',
-        collapsable: false,
-        children: ['vue', 'webpack','cli']
-      }
-    ],
+    sidebar: {
+      '/linux/': ['', 'ssh'],
+      '/front-docs/': ['', 'vue', 'webpack', 'cli'],
+      '/': ['node', 'linux']
+    },
     // 仓库地址
     repo: 'https://github.com/hkx930919/book',
     // 仓库链接label
@@ -38,9 +67,9 @@ let config = {
     nav: [
       { text: '前端', link: '/front-docs/' },
       { text: 'nodejs', link: '/node/' },
-      { text: 'react-native', link: '/react-native/' },
+      //   { text: 'react-native', link: '/react-native/' },
       { text: '踩坑记录', link: '/project-book/' },
-      { text: 'linux及自动化构建', link: '/linux/' }
+      { text: 'linux', link: '/linux/' }
     ]
   },
   configureWebpack: {
@@ -53,17 +82,5 @@ let config = {
     }
   }
 }
-const hasSidebar = config.themeConfig && config.themeConfig.sidebar
-if (hasSidebar) {
-  const sidebar = config.themeConfig.sidebar.map(value => {
-    if (value.hasOwnProperty('children') && value.hasOwnProperty('path')) {
-      return {
-        ...value,
-        children: value.children.map(child => `${value.path}${child}`)
-      }
-    }
-    return value
-  })
-  config.themeConfig.sidebar = sidebar
-}
+config.sidebar = getSideBar()
 module.exports = config

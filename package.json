@@ -14,5 +14,8 @@
     "license": "ISC",
     "dependencies": {
         "vuepress": "^0.14.11"
+    },
+    "devDependencies": {
+        "fs-extra": "^8.1.0"
     }
 }

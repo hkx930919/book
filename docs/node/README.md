@@ -1,7 +1,3 @@
----
-sidebar: auto
----
-
 # node
 
 ## 1 mongodb 下载
@@ -229,5 +225,7 @@ sidebar: auto
         return data
       }
       ```
+
 # 2 JWT
+
 ##

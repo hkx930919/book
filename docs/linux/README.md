@@ -1,8 +1,4 @@
----
-sidebar: auto
----
-
-# 一：jenkins+nginx 前端自动构建
+# jenkins+nginx 前端自动构建
 
 ## 1 准备工作
 

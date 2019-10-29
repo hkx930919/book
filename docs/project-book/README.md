@@ -1,7 +1,3 @@
----
-sidebar: auto
----
-
 # 踩坑记录
 
 ## 1. H5 页面适配 IPHONEX
