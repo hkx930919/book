@@ -42,9 +42,33 @@ let config = {
   title: '日常所得',
   // 网页描述
   description: '一个前端的个人站点',
+
   head: [
     // 页面icon
-    ['link', { rel: 'icon', href: '/icon.png' }]
+    ['link', { rel: 'icon', href: '/icon.png' }],
+    [
+      'script',
+      {
+        src:
+          'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js'
+      }
+    ],
+    [
+      'script',
+      {
+        src:
+          'https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.2/jquery.fancybox.min.js'
+      }
+    ],
+    [
+      'link',
+      {
+        rel: 'stylesheet',
+        type: 'text/css',
+        href:
+          'https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.2/jquery.fancybox.min.css'
+      }
+    ]
   ],
   markdown: {
     // 代码块行号
