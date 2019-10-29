@@ -1,6 +1,6 @@
 let config = {
   // 页面标题
-  base: '/book-view/',
+  base: '/book/',
 
   title: '日常所得',
   // 网页描述
