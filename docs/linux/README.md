@@ -69,6 +69,9 @@ git push 触发钩子后，jenkins 就要开始工作了，自动化的构建任
 - 3.3 点击构建，把要执行的命令输进去，多个命令使用&&分开。
   ![java-list](~./images/jenkins-build-shell.png)
 
+_在安装 nvm 时，遇到下载 nvm 一直失败，将 NVM Settings NVM Install URL 改成：https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash_
+![java-list](./images/jenkins-nvm.png)
+
 ## 4 实现自动化部署
 
 自动化部署可能是我们最需要的功能了，公司就一台服务器，我们可以使用人工部署的方式，但是如果公司有 100 台服务器呢，人工部署就有些吃力了，而且一旦线上出了问题，回滚也很麻烦。所以这一节实现一下自动部署的功能。
