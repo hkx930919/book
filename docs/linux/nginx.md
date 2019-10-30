@@ -12,9 +12,9 @@
 ## 2 nginx 默认配置
 
 - nginx 的配置信息在`/etc/nginx/`目录下，`/etc/nginx/nginx.conf`文件是 nginx 的默认配置
-  ![nginx-config]('./images/nginx-config.png')
+  ![nginx-config](./images/nginx-config.png)
 - `nginx.conf`文件默认引入`/etc/nginx/conf.d`目录下的`*.conf`配置文件
-  ![nginx_conf]('./images/nginx_conf.png')
+  ![nginx_conf](./images/nginx_conf.png)
 
 ## 3 server 虚拟机配置
 
@@ -78,9 +78,9 @@ server {
 }
 ```
 
-![nginx_conf]('./images/nginx_反向代理.jpg')
+![nginx_反向代理](./images/nginx_fxdl.jpg)
 
 ## 5 负载均衡
 
 在 upstream 配置多个 server,使用 weight 控制权重
-![nginx_conf]('./images/nginx_负载均衡.png')
+![nginx_负载均衡](./images/nginx_fzjh.png)
