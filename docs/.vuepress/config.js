@@ -98,7 +98,8 @@ let config = {
       { text: 'nodejs', link: '/node/' },
       //   { text: 'react-native', link: '/react-native/' },
       { text: '踩坑记录', link: '/project-book/' },
-      { text: 'linux', link: '/linux/' }
+      { text: 'linux', link: '/linux/' },
+      { text: '宝宝', link: '/mother-baby/' }
     ]
   },
   configureWebpack: {
