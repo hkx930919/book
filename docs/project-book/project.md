@@ -247,3 +247,15 @@ FastClick.prototype.focus = function(targetElement) {
   }
 }
 ```
+
+## 5 浏览器打印
+
+使用插件`react-to-print`打印页面
+
+- 坑点 1 边线显示不全
+
+使用 div 布局，设置 border 样式，打印样式时，border 显示失真，有的显示不了。使用 table 布局，可以完全显示边线
+
+- 坑点 2 打印多页面，下一页面时顶部空白
+
+每一个页面应该有明确的内容，再切换到下一页时，增加样式`pageBreakBefore: 'always'`。page-break-after 属性可以让我们强制或者避免页面在一个元素之后断页，即在**在一个元素之后断页**，如果我们想要一个元素总是在页面的开头，我们可以强制页面设置`page-break-before`属性来进行断页。
