@@ -325,3 +325,13 @@ module.exports = {
     "react-hot-loader/babel",
 ]
 ```
+
+# 文件指纹
+
+## 4 hash chunkhash contenthash
+
+- hash：和整个项⽬的构建相关，只要项⽬⽂件有修改，整个项⽬构建的 hash 值就会更改
+- Chunkhash：和 webpack 打包的 chunk 有关，不同的 entry 会⽣成不同的 chunkhash 值
+- Contenthash：根据⽂件内容来定义 hash ，⽂件内容不变，则 contenthash 不变
+
+一般在入口的 entry 中使用 chunkhash，当别的入口文件修改时不会影响到其他的路口文件。针对 css 使用 contenthash 来保证修改 js 时不会影响到 css
