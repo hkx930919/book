@@ -1,7 +1,9 @@
 const fs = require('fs-extra')
 const path = require('path')
 const getSideBar = () => {
-  const sideBar = {}
+  const sideBar = {
+    // '/': ['', '/front-docs/', '/front-build/']
+  }
   const DOCS_PATH = path.join(__dirname, '../../docs/')
   const BLACK_LIST = ['.vuepress']
   const dirs = fs
