@@ -335,3 +335,68 @@ module.exports = {
 - Contenthash：根据⽂件内容来定义 hash ，⽂件内容不变，则 contenthash 不变
 
 一般在入口的 entry 中使用 chunkhash，当别的入口文件修改时不会影响到其他的路口文件。针对 css 使用 contenthash 来保证修改 js 时不会影响到 css
+
+```JS
+// 入口 chunkhash
+module.exports = {
+  entry: {
+    app: './src/index.js',
+    search: './src/search.js'
+  },
+  output: {
+    filename: '[name]_[chunkhash:8].js',
+    path: path.join(__dirname, './dist')
+  },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        use: 'babel-loader'
+      },
+
+    ]
+  },
+}
+```
+
+```JS
+module.exports = merge(webpackBaseConfig, {
+  mode: 'production',
+  module: {
+    rules: [
+      {
+        test: /\.less$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          {
+            loader: 'css-loader',
+            options: {
+              modules: {
+                localIdentName: '[path][name]__[local]--[hash:base64:5]',
+                auto: true
+              }
+            }
+          },
+          'less-loader'
+        ]
+      }
+    ]
+  },
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: '[name].[contenthash].css', // css contenthash，保持缓存
+      chunkFilename: '[id].[contenthash].css'
+    }),
+    new OptimizeCssAssetsPlugin({
+      assetNameRegExp: /\.css$/g,
+      cssProcessor: cssnano,
+      cssProcessorOptions: {
+        discardComments: { removeAll: true },
+        // 避免 cssnano 重新计算 z-index
+        safe: true,
+        autoprefixer: false
+      }
+    })
+  ]
+})
+```
