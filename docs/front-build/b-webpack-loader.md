@@ -333,3 +333,86 @@ module.exports = {
 ```
 
 **注意在`package.json`添加`browserslist`字段**
+
+## 2.7 px2rem
+
+> 移动端 px 自动转换成 px
+
+借助`lib-flexible`来动态写入`html`的`font-size`
+
+- 使用`px2rem-loader`
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      generateCssLoader({
+        include: path.join(__dirname, './src/'),
+        test: /\.css$/,
+        loaders: [
+          {
+            loader: 'css-loader',
+            options: {
+              modules: {
+                localIdentName: '[path][name]__[local]--[hash:base64:5]',
+                auto: true
+              }
+            }
+          },
+          {
+            loader: 'px2rem-loader',
+            options: {
+              remUnit: 37.5
+            }
+          }
+        ]
+      })
+    ]
+  }
+}
+```
+
+**注意**，对于个别需要转换的样式可以在 css 后面增加/\*no\*/注释来避免转换
+
+- 使用`postcss-loader postcss-pxtorem`实现
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      generateCssLoader({
+        include: path.join(__dirname, './src/'),
+        test: /\.css$/,
+        loaders: [
+          {
+            loader: 'css-loader',
+            options: {
+              modules: {
+                localIdentName: '[path][name]__[local]--[hash:base64:5]',
+                auto: true
+              }
+            }
+          },
+          'postcss-loader'
+        ]
+      })
+    ]
+  }
+}
+
+// postcss.config.js
+module.exports = {
+  plugins: {
+    autoprefixer: {
+      browsers: ['Android >= 4.0', 'iOS >= 7']
+    },
+    'postcss-pxtorem': {
+      rootValue: 37.5,
+      propList: ['*'],
+      selectorBlackList: []
+    }
+  }
+}
+```
+
+**注意**对于一些不需要转换的样式可以配置`selectorBlackList`选项进行过滤
