@@ -416,3 +416,46 @@ module.exports = {
 ```
 
 **注意**对于一些不需要转换的样式可以配置`selectorBlackList`选项进行过滤
+
+## 2.8 eslint-loader
+
+> 使用`eslint-loader`,构建时校验代码规范
+
+- 1 安装`eslint eslint-loader`，使用`eslint --init`快速生成一份 eslint 配置文件
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.(js|jsx|ts|tsx)$/,
+        loader: 'eslint-loader',
+        options: {
+          cache: true
+        },
+        enforce: 'pre',
+        include: path.join(__dirname, '../src/')
+      }
+    ]
+  }
+}
+```
+
+- 2 git commit 前检测
+  > 安装`husky lint-staged`,在`package.json`配置
+
+```JSON
+{
+ "husky": {
+    "hooks": {
+            "pre-commit": "lint-staged"
+        }
+    },
+"lint-staged": {
+    "src/**/*.js": [
+            "eslint --fix",
+            "git add"
+        ]
+    }
+}
+```
