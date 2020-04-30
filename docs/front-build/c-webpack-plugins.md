@@ -191,3 +191,15 @@ module.exports = {
   ]
 }
 ```
+
+## 3.8 html-webpack-externals-plugin
+
+> 友好的输出错误信息
+
+```js
+const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin')
+module.exports = {
+  stats: 'errors-only',
+  plugins: [new FriendlyErrorsWebpackPlugin()]
+}
+```
