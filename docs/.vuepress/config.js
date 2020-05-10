@@ -13,7 +13,6 @@ const getSideBar = () => {
       const dirPath = path.join(DOCS_PATH, p)
       return fs.statSync(dirPath).isDirectory()
     })
-  console.log('---dirs', dirs)
   dirs.forEach(d => {
     const dirPath = path.join(DOCS_PATH, d)
     const files = fs
@@ -32,8 +31,6 @@ const getSideBar = () => {
       sideBar[`/${d}/`] = files
     }
   })
-  console.log('---sideBar', sideBar)
-
   return sideBar
 }
 

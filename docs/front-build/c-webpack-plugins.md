@@ -102,30 +102,7 @@ module.exports = {
 }
 ```
 
-## 3.5 HtmlWebpackPlugin
-
-> 可以根据 html 文件生成一个 HTML5 文件， 其中自动引入打包后的资源,还可以压缩 HTML 文件。
-
-```js
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-module.exports = {
-  plugins: [
-    new HtmlWebpackPlugin({
-      filename: `pageName/index.html?[contenthash:8]`,
-      template: path.join(__dirname, 'pageName', 'index.html'),
-      chunks: [`pageName/index`],
-      inject: true,
-      minify: {
-        removeComments: true,
-        collapseWhitespace: true,
-        removeAttributeQuotes: true
-      }
-    })
-  ] // 默认清除outpu文件夹
-}
-```
-
-## 3.6 TerserWebpackPlugin
+## 3.5 TerserWebpackPlugin
 
 > 压缩 js 文件，可多进程并行压缩,去除代码中的打印。
 
@@ -151,7 +128,7 @@ module.exports = {
 }
 ```
 
-## 3.7 html-webpack-externals-plugin
+## 3.6 html-webpack-externals-plugin
 
 > 基础库分离，可以将一些基础包通过 cdn 引入，不打入`bundle`中
 
@@ -192,7 +169,7 @@ module.exports = {
 }
 ```
 
-## 3.8 html-webpack-externals-plugin
+## 3.7 friendly-errors-webpack-plugin
 
 > 友好的输出错误信息
 
