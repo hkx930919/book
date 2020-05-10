@@ -240,5 +240,94 @@ describe('entry', () => {
 
 使用`husky commitlint lint-staged eslint`规范`commit`日志，并在每次`commit`前做 eslint 校验
 
-- 1 规范`commit`日志
+### 1 规范`commit`日志
 
+安装`husky @commitlint/cli @commitlint/config-conventional`，项目根目录配置`commitlint.config.js`，配置`package.json`
+
+**commitlint.config.js**配置`commit-msg`规范
+
+```js
+module.exports = {
+  extends: ['@commitlint/config-conventional'],
+  rules: {
+    'type-enum': [
+      2,
+      'always',
+      [
+        'chore', // 新增依赖
+        'docs', // 文档
+        'feat', // 新特性
+        'fix', // bug修复
+        'perf', // 性能优化
+        'refactor', // 功能重构
+        'revert', // 代码回滚
+        'style', // 样式
+        'test' // 测试
+      ]
+    ]
+  }
+}
+```
+
+**package.json**配置`husky`里的`commit-msg`钩子
+
+```JSON
+{
+"husky": {
+  "hooks": {
+    "commit-msg": "commitlint -e $HUSKY_GIT_PARAMS"
+    }
+  }
+}
+
+```
+
+### 2 git`commit`前校验
+
+安装`husky lint-staged eslint`，配置`package.json`
+
+**commitlint.config.js**配置`commit-msg`规范
+
+```js
+module.exports = {
+  extends: ['@commitlint/config-conventional'],
+  rules: {
+    'type-enum': [
+      2,
+      'always',
+      [
+        'chore', // 新增依赖
+        'docs', // 文档
+        'feat', // 新特性
+        'fix', // bug修复
+        'perf', // 性能优化
+        'refactor', // 功能重构
+        'revert', // 代码回滚
+        'style', // 样式
+        'test' // 测试
+      ]
+    ]
+  }
+}
+```
+
+**package.json**配置`husky`里的`commit-msg`钩子
+
+```JSON
+{
+"husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "commit-msg": "commitlint -E $HUSKY_GIT_PARAMS"
+    }
+  },
+  "lint-staged": {
+    "src/**/*.js": [
+      "eslint --fix",
+      "git add"
+    ]
+  }
+}
+
+
+```
