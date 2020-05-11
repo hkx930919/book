@@ -63,7 +63,58 @@ module.exports = {
 
 ## 4.3 优化手段
 
-- 使用`DllPlugin DllReferencePlugin`提前打包好一些库，
+- 1 使用更高版本的`node webpack`.更高版本的本身就可以提高很大的性能。
+- 2 `thread-loader`多进程构建
+
+  ```js
+  // 对于比较耗时的loader可以使用thread-loader，一般是css-loader、babel-loader、eslint-loader
+  module.exports = {
+    module: {
+      rules: [
+        {
+          test: /\.(j|t)sx?$/,
+          include: [appPath],
+          exclude: /node_modules/,
+          use: isStartMode()
+            ? [
+                'thread-loader',
+                ('react-hot-loader/webpack',
+                {
+                  loader: 'babel-loader',
+                  options: { cacheDirectory: true }
+                })
+              ]
+            : [
+                'thread-loader',
+                {
+                  loader: 'babel-loader',
+                  options: { cacheDirectory: true }
+                }
+              ]
+        },
+        {
+          test: /\.(js|jsx|ts|tsx)$/,
+          loaders: [
+            'thread-loader',
+            {
+              loader: 'eslint-loader',
+              options: {
+                cache: true
+              }
+            }
+          ],
+          enforce: 'pre',
+          include: [resolve('src')]
+        }
+      ]
+    }
+  }
+  ```
+
+- 3 `terser-webpack-plugin`开启多进程压缩，修改`parallel`参数
+- 4 设置 Externals，使用`html-webpack-externals-plugin`分离基础包到 cdn
+
+- 5 使用`DllPlugin DllReferencePlugin`提前打包好一些库，
 
   - 第一步创建好`webpack.dll`
     **webpack.config.dll**
@@ -136,3 +187,9 @@ module.exports = {
     <script src="./library/library.dll.js"></script>
   </body>
   ```
+
+- 6 开启缓存，对`babel-loader eslint-loader terser-webpack-plugin`开启缓存，对于不支持缓存的 loader 或 plugin，使用`cache-loader` 或者 `hard-source-webpack-plugin`
+- 7 `PurifyCSS`删除无用的 css
+- 8 动态`Polyfill`
+- 9 压缩图片
+- 10 `tree-shaking`

@@ -32,7 +32,7 @@ module.exports = {
 }
 ```
 
-## 3.2 CleanWebpackPlugin
+## 3.2 clean-webpack-plugin
 
 > 每次构建前清楚 output 文件夹
 
@@ -43,7 +43,7 @@ module.exports = {
 }
 ```
 
-## 3.3 MiniCssExtractPlugin
+## 3.3 mini-css-extract-plugin
 
 > 提取 css 文件
 
@@ -79,12 +79,12 @@ module.exports = {
 }
 ```
 
-## 3.4 HtmlWebpackPlugin
+## 3.4 html-webpack-plugin
 
 > 可以根据 html 文件生成一个 HTML5 文件， 其中自动引入打包后的资源。
 
 ```js
-const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+const { HtmlWebpackPlugin } = require('html-webpack-plugin')
 module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
@@ -102,7 +102,7 @@ module.exports = {
 }
 ```
 
-## 3.5 TerserWebpackPlugin
+## 3.5 terser-webpack-plugin
 
 > 压缩 js 文件，可多进程并行压缩,去除代码中的打印。
 
@@ -112,18 +112,20 @@ const TerserPlugin = require('terser-webpack-plugin')
 module.exports = {
   optimization: {
     minimize: true,
-    minimizer: [new TerserPlugin({
-        cache:true，
-         parallel: true,
-         terserOptions:{
-             compress: {
-              warnings: false,
-              drop_console: true,
-              drop_debugger: true,
-              pure_funcs: ['console.log']
-          },
-         }
-    })]
+    minimizer: [
+      new TerserPlugin({
+        cache: true,
+        parallel: true,
+        terserOptions: {
+          compress: {
+            warnings: false,
+            drop_console: true,
+            drop_debugger: true,
+            pure_funcs: ['console.log']
+          }
+        }
+      })
+    ]
   }
 }
 ```
