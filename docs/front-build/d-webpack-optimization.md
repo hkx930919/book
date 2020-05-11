@@ -189,7 +189,136 @@ module.exports = {
   ```
 
 - 6 开启缓存，对`babel-loader eslint-loader terser-webpack-plugin`开启缓存，对于不支持缓存的 loader 或 plugin，使用`cache-loader` 或者 `hard-source-webpack-plugin`
-- 7 `PurifyCSS`删除无用的 css
+- 7 `purgecss-webpack-plugin`删除无用的 css
+  > **慎用**：对于`css modules`无效，且会把 css 文件删除，设置`whitelistPatterns`也没多大意义
+
+```js
+const webpackBaseConfig = require('./webpack.base')
+const merge = require('webpack-merge')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin')
+const webpack = require('webpack')
+const cssnano = require('cssnano')
+const { speedMeatureWebpack } = require('./util')
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
+const PurgecssPlugin = require('purgecss-webpack-plugin')
+const glob = require('glob')
+const path = require('path')
+
+const PATH_SRC = path.join(__dirname, '../src')
+module.exports = speedMeatureWebpack(
+  merge(webpackBaseConfig, {
+    output: {
+      publicPath: '../',
+      chunkFilename: `[name].js?[contenthash]`
+    },
+    mode: 'production',
+    plugins: [
+      new webpack.HashedModuleIdsPlugin(),
+      new MiniCssExtractPlugin({
+        filename: '[name].[contenthash].css',
+        chunkFilename: '[name].[contenthash].css'
+      }),
+      new OptimizeCssAssetsPlugin({
+        assetNameRegExp: /\.css$/g,
+        cssProcessor: cssnano,
+        cssProcessorOptions: {
+          discardComments: { removeAll: true },
+          // 避免 cssnano 重新计算 z-index
+          safe: true,
+          autoprefixer: false
+        }
+      }),
+      new PurgecssPlugin({
+        paths: glob.sync(`${PATH_SRC}/**/*`, { nodir: true })
+      }),
+      new BundleAnalyzerPlugin()
+    ],
+    optimization: {
+      namedChunks: true,
+      splitChunks: {
+        cacheGroups: {
+          common: {
+            chunks: 'all',
+            minChunks: 2,
+            minSize: 0
+          }
+        }
+      }
+    }
+  }),
+  false
+)
+```
+
 - 8 动态`Polyfill`
+  > 每次打开页面，浏览器都会向 Polyfill Service 发送请求，Polyfill Service 识别 User Agent，下发不同的 Polyfill，做到按需加载 Polyfill 的效果
+  - [polyfill.io](https://polyfill.io/v3/) 官方提供的服务
+  ```html
+  <script src="https://polyfill.io/v3/polyfill.min.js"></script>
+  ```
+  - 基于官方自建 polyfill 服务
+  ```
+  //huayang.qq.com/polyfill_service/v2/polyfill.min.js?unknown=polyfill&features=Promise,Map,Set
+  ```
 - 9 压缩图片
+  > 配置 `image-webpack-loader`,一般比较少用，因为图片都放到 CDN 上去了，不会直接引用图片
+  ```js
+  module.exports = {
+    module: {
+      rules: [
+        {
+          test: /\.(png|svg|jpg|gif)$/,
+          use: [
+            {
+              loader: 'file-loader'
+            },
+            {
+              loader: 'image-webpack-loader',
+              options: {
+                mozjpeg: {
+                  progressive: true,
+                  quality: 65
+                },
+                // optipng.enabled: false will disable optipng
+                optipng: {
+                  enabled: false
+                },
+                pngquant: {
+                  quality: [0.65, 0.9],
+                  speed: 4
+                },
+                gifsicle: {
+                  interlaced: false
+                },
+                // the webp option will enable WEBP
+                webp: {
+                  quality: 75
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+  ```
 - 10 `tree-shaking`
+- 11 减少文件搜索范围和缩小构建目标
+
+```js
+module.exports = {
+  reolve: {
+    modules: [path.resolve(__dirname, 'node_modules')] //
+  },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        include: path.join(__dirname, '../src/'), // 尽可能少的构建模块，只解析src目录
+        loaders: ['babel-loader']
+      }
+    ]
+  }
+}
+```
