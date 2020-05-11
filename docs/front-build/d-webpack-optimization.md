@@ -76,7 +76,7 @@ module.exports = {
       context: process.cwd(),
       mode: 'production',
       entry: {
-        library: ['react', 'react-dom', 'mobx', 'mobx-react', 'moment']
+        library: ['react', 'react-dom', 'mobx', 'mobx-react']
       },
       output: {
         filename: '[name].dll.js',
@@ -92,7 +92,7 @@ module.exports = {
     }
     ```
 
-  - 在`webpack.config.base`引入对应的 dll.json
+  - 在`webpack.config.base`引入对应的 dll.json，如果使用了`moment`且没有国际化的需求，可以减小`moment`的体积。
     **webpack.config.base**
 
     ```js
@@ -111,7 +111,8 @@ module.exports = {
         ]),
         new webpack.DllReferencePlugin({
           manifest: dllJsonPath
-        })
+        }),
+        new webpack.ContextReplacementPlugin(/moment[/\\]locale$/, /zh-cn/)
       ]
     }
     ```
