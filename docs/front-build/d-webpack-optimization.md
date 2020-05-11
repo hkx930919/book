@@ -62,3 +62,76 @@ module.exports = {
 ```
 
 ## 4.3 优化手段
+
+- 使用`DllPlugin DllReferencePlugin`提前打包好一些库，
+
+  - 第一步创建好`webpack.dll`
+    **webpack.config.dll**
+
+    ```js
+    const webpack = require('webpack')
+    const path = require('path')
+
+    module.exports = {
+      context: process.cwd(),
+      mode: 'production',
+      entry: {
+        library: ['react', 'react-dom', 'mobx', 'mobx-react', 'moment']
+      },
+      output: {
+        filename: '[name].dll.js',
+        path: path.join(__dirname, '../dll/library'),
+        library: '[name]'
+      },
+      plugins: [
+        new webpack.DllPlugin({
+          name: '[name]',
+          path: path.join(__dirname, '../dll/library/[name].json')
+        })
+      ]
+    }
+    ```
+
+  - 在`webpack.config.base`引入对应的 dll.json
+    **webpack.config.base**
+
+    ```js
+    const webpack = require('webpack')
+    const path = require('path')
+    const CopyPlugin = require('copy-webpack-plugin')
+    const dllJsonPath = require('../dll/library/library')
+    module.exports = {
+      plugins: [
+        // copy打包好的dll文件
+        new CopyPlugin([
+          {
+            from: join(__dirname, '../dll'),
+            to: outputPath
+          }
+        ]),
+        new webpack.DllReferencePlugin({
+          manifest: dllJsonPath
+        })
+      ]
+    }
+    ```
+
+  - 配置`package.josn`和`index.html`
+
+  ```JSON
+  {
+    "scripts": {
+      "clean:dll": "rimraf dll",
+      "dll": "npm run clean:dll && webpack --colors --config webpack/webpack.config.dll.js"
+    },
+  }
+
+  ```
+
+  ```html
+  <body>
+    <div id="root" class="react-root"></div>
+    <!-- dll文件引入 -->
+    <script src="./library/library.dll.js"></script>
+  </body>
+  ```
