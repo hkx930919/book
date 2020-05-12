@@ -7,6 +7,15 @@
 
 - tapable 的 hook 接受一个数组参数,表示回调时接受参数的个数,触发钩子时,多余的参数不会传递过去.
 - hook 使用`tap tapAsync tapPromise`注册事件,使用`call callAsync promise`触发事件,`tapAsync tapPromise`不能用于`Sync`开头的钩子类.call 对应 tap、callAsync 对应 tapAsync 和 promise 对应 tapPromise。一般来说，我们注册事件回调时用了什么方法，触发时最好也使用对应的方法。
+- **事件回调的运行逻辑**
+  - Basic:基础类型,单纯的调用注册的事件回调,并不关心其内部的运行逻辑
+  - Bail:保险类型(熔断类型),当一个事件回调在运行时返回的值不为`undefined`时,停止后面事件回调的执行
+  - Waterfall:瀑布类型,如果当前执行的事件回调返回的值不为`undefined`时,那么就把下一个事件回调的第一个参数替换成这个值
+  - Loop:循环类型,如果当前执行的事件回调返回的值不为`undefined`时,重新从第一个注册的事件回调处执行,直到当前执行的事件回调没有返回值
+- **触发事件的方式**
+  - Sync:Sync 开头的 HOOK 类只能使用`tap`方法注册事件回调,这类事件回调会同步执行,如果使用`tapAsync tapPromise`方法注册会报错
+  - AsyncSeries:Async 开头的 HOOK 类,不能用`call`方法触发事件,必须用`callAsync promise`方法触发,这两个方法都能触发`tap tapAsync tapPromise`注册的事件回调,`AsyncSeries`按照顺序执行,如果事件回调时异步的,那么回调等到当前异步执行完毕才会执行下一个事件回调
+  - AsyncParalle:与`AsyncSeries`类似,只不过`AsyncParalle`会并行的执行所有的事件回调
 
 ## 5.2 事件注册的先后顺序
 
