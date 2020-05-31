@@ -74,6 +74,7 @@ let config = {
     lineNumbers: true
   },
   themeConfig: {
+    displayAllHeaders: true,
     // 最后更新时间
     lastUpdated: '最后更新时间',
     // 所有页面自动生成侧边栏
@@ -94,7 +95,7 @@ let config = {
     // 导航
     nav: [
       { text: '前端', link: '/front-docs/' },
-      { text: 'nodejs', link: '/node/' },
+      // { text: 'nodejs', link: '/node/' },
       //   { text: 'react-native', link: '/react-native/' },
       { text: '踩坑记录', link: '/project-book/' },
       { text: 'linux', link: '/linux/' },
