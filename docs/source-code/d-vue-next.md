@@ -878,6 +878,36 @@ export const mutableHandlers: ProxyHandler<object> = {
   has,
   ownKeys
 };
+const arrayInstrumentations: Record<string, Function> = {};
+["includes", "indexOf", "lastIndexOf"].forEach(key => {
+  arrayInstrumentations[key] = function (...args: any[]): any {
+    // this指向的是receiver proxy对象
+    const arr = toRaw(this) as any;
+    //
+    for (let i = 0, l = (this as any).length; i < l; i++) {
+      // 为什么这三个方法对每个index都做追踪？那every、some等等要不要做遍历
+      // 因为这三个方法用到了原生对象，而没有用代理对象，为了增加依赖，所以对每个index都增加了依赖追踪
+      track(arr, TrackOpTypes.GET, i + "");
+    }
+    // we run the method using the original args first (which may be reactive)
+    // 这里使用原生对象进行调用函数，那么是不会触发代理对象的 length,index,方法名 的依赖添加，所以上面遍历数组增加了依赖添加
+    const res = arr[key](...args);
+    if (res === -1 || res === false) {
+      // if that didn't work, run it again using raw values.
+      // 变成原始对象再进行一次操作，存在以下情况做判断
+      /**
+       *  const raw = {};
+       *  const arr = reactive([{}, {}]);
+       *  arr.push(raw);
+       *  console.log(arr[2] === raw);
+       */
+      return arr[key](...args.map(toRaw));
+    } else {
+      return res;
+    }
+  };
+});
+
 /**
  * get函数
  * 创建响应式数据：1 对ReactiveFlags.IS_REACTIVE,ReactiveFlags.IS_READONLY,ReactiveFlags.RAW三个属性特殊处理。
@@ -898,7 +928,7 @@ function createGetter(isReadonly = false, shallow = false) {
     } else if (key === ReactiveFlags.RAW && receiver === (isReadonly ? readonlyMap : reactiveMap).get(target)) {
       return target;
     }
-    // "includes", "indexOf", "lastIndexOf"三种key做特殊处理，这是为啥？
+    // "includes", "indexOf", "lastIndexOf"三种key做特殊处理,用原生的方法来获取，而不是使用代理对象
     const targetIsArray = isArray(target);
     if (targetIsArray && hasOwn(arrayInstrumentations, key)) {
       return Reflect.get(arrayInstrumentations, key, receiver);
@@ -1002,3 +1032,334 @@ function ownKeys(target: object): (string | number | symbol)[] {
   return Reflect.ownKeys(target);
 }
 ```
+
+`collectionHandlers`对应`Map Set WeakMap WeakSet`的数据劫持。`get ow`
+
+```ts
+// 只需要做一个get拦截，因为在map set的内部实现中必须通过 this 才能访问它们的数据，但是通过Reflect 反射的时候，target 内部的 this 其实是指向 proxy 实例的，如果使用Reflect拦截会报错。在vue中使用的get代理的方式处理
+export const mutableCollectionHandlers: ProxyHandler<CollectionTypes> = {
+  get: createInstrumentationGetter(false, false)
+};
+
+function createInstrumentationGetter(isReadonly: boolean, shallow: boolean) {
+  const instrumentations = shallow
+    ? shallowInstrumentations
+    : isReadonly
+    ? readonlyInstrumentations
+    : mutableInstrumentations;
+
+  return (target: CollectionTypes, key: string | symbol, receiver: CollectionTypes) => {
+    // 三个特殊属性的处理
+    if (key === ReactiveFlags.IS_REACTIVE) {
+      return !isReadonly;
+    } else if (key === ReactiveFlags.IS_READONLY) {
+      return isReadonly;
+    } else if (key === ReactiveFlags.RAW) {
+      return target;
+    }
+
+    return Reflect.get(hasOwn(instrumentations, key) && key in target ? instrumentations : target, key, receiver);
+  };
+}
+```
+
+主要是看`mutableInstrumentations`里的内容
+
+```ts
+const mutableInstrumentations: Record<string, Function> = {
+  get(this: MapTypes, key: unknown) {
+    return get(this, key);
+  },
+  get size() {
+    return size((this as unknown) as IterableCollections);
+  },
+  has,
+  add,
+  set,
+  delete: deleteEntry,
+  clear,
+  forEach: createForEach(false, false)
+};
+/**map
+ * 1 对key和rawKey进行依赖收集
+ * 2 使用原生方法获取值，将得到的值进行递归的依赖收集
+ */
+function get(target: MapTypes, key: unknown, isReadonly = false, isShallow = false) {
+  // #1772: readonly(reactive(Map)) should return readonly + reactive version
+  // of the value
+  target = (target as any)[ReactiveFlags.RAW];
+  const rawTarget = toRaw(target);
+  const rawKey = toRaw(key);
+  // 对key进行依赖追踪
+  if (key !== rawKey) {
+    !isReadonly && track(rawTarget, TrackOpTypes.GET, key);
+  }
+  // 对rawKey进行依赖追踪
+  !isReadonly && track(rawTarget, TrackOpTypes.GET, rawKey);
+  const {has} = getProto(rawTarget);
+  const wrap = isReadonly ? toReadonly : isShallow ? toShallow : toReactive;
+  // 使用原生方法判断该key之前是否存在，避免key被重复收集
+  if (has.call(rawTarget, key)) {
+    // 对target.get(key)进行递归的追踪
+    return wrap(target.get(key));
+    // 对target.get(rawKey)进行递归的追踪
+  } else if (has.call(rawTarget, rawKey)) {
+    return wrap(target.get(rawKey));
+  }
+}
+/**map、set
+ * 1 对key和rawKey进行依赖收集
+ * 2 使用target调用has方法并返回
+ */
+function has(this: CollectionTypes, key: unknown, isReadonly = false): boolean {
+  const target = (this as any)[ReactiveFlags.RAW];
+  const rawTarget = toRaw(target);
+  const rawKey = toRaw(key);
+  if (key !== rawKey) {
+    !isReadonly && track(rawTarget, TrackOpTypes.HAS, key);
+  }
+  !isReadonly && track(rawTarget, TrackOpTypes.HAS, rawKey);
+  return key === rawKey ? target.has(key) : target.has(key) || target.has(rawKey);
+}
+/**map、set
+ * 对ITERATE_KEY进行依赖收集
+ */
+function size(target: IterableCollections, isReadonly = false) {
+  target = (target as any)[ReactiveFlags.RAW];
+  !isReadonly && track(toRaw(target), TrackOpTypes.ITERATE, ITERATE_KEY);
+  return Reflect.get(target, "size", target);
+}
+/**set
+ * 对之前没有的值进行依赖收集
+ */
+function add(this: SetTypes, value: unknown) {
+  value = toRaw(value);
+  const target = toRaw(this);
+  const proto = getProto(target);
+  const hadKey = proto.has.call(target, value);
+  const result = target.add(value);
+  if (!hadKey) {
+    trigger(target, TriggerOpTypes.ADD, value, value);
+  }
+  return result;
+}
+
+/**map
+ * 根据是否含有key的情况，触发两种模式的依赖更新
+ * 返回target的set返回值
+ */
+function set(this: MapTypes, key: unknown, value: unknown) {
+  value = toRaw(value);
+  const target = toRaw(this);
+  const {has, get} = getProto(target);
+
+  let hadKey = has.call(target, key);
+  if (!hadKey) {
+    key = toRaw(key);
+    hadKey = has.call(target, key);
+  } else if (__DEV__) {
+    checkIdentityKeys(target, has, key);
+  }
+
+  const oldValue = get.call(target, key);
+  const result = target.set(key, value);
+  if (!hadKey) {
+    trigger(target, TriggerOpTypes.ADD, key, value);
+  } else if (hasChanged(value, oldValue)) {
+    trigger(target, TriggerOpTypes.SET, key, value, oldValue);
+  }
+  return result;
+}
+/**map set
+ * 如果hadkey，触发delete依赖更新
+ * 返回target的delete返回值
+ */
+function deleteEntry(this: CollectionTypes, key: unknown) {
+  const target = toRaw(this);
+  const {has, get} = getProto(target);
+  let hadKey = has.call(target, key);
+  if (!hadKey) {
+    key = toRaw(key);
+    hadKey = has.call(target, key);
+  } else if (__DEV__) {
+    checkIdentityKeys(target, has, key);
+  }
+
+  const oldValue = get ? get.call(target, key) : undefined;
+  // forward the operation before queueing reactions
+  const result = target.delete(key);
+  if (hadKey) {
+    trigger(target, TriggerOpTypes.DELETE, key, undefined, oldValue);
+  }
+  return result;
+}
+
+/**map set
+ * 如果target的size不为0，触发clear模式依赖更新
+ * 返回target的clear返回值
+ */
+function clear(this: IterableCollections) {
+  const target = toRaw(this);
+  const hadItems = target.size !== 0;
+  const oldTarget = __DEV__ ? (isMap(target) ? new Map(target) : new Set(target)) : undefined;
+  // forward the operation before queueing reactions
+  const result = target.clear();
+  if (hadItems) {
+    trigger(target, TriggerOpTypes.CLEAR, undefined, undefined, oldTarget);
+  }
+  return result;
+}
+```
+
+以上，使用`reactive`方法创建响应式数据时，主要是利用`proxy`拦截数据，与`vue2`观测数据最大的区别是，新增的属性不用
+做`hack`处理，数组也可以拦截。
+
+- `Array Object`使用`baseHandlers`里的进行拦截
+  - `get`对不是`readonly`数据收集依赖，使用`Reflect.get`获取值`res`
+    - 读取的`key`,对应`SymbolKey`和其他特殊的`key`做了特殊处理，不会收集依赖。
+    - `shallow`浅层观测下，不会对获取的值做进一步处理
+    - `res`为`ref`，如果`res`是对象，返回`res.value`；`key`为 0 和正整数且`res`为数组，返回`res`
+    - `res`是否是`Array Object`，判断递归的做`proxy`拦截
+  - `set`拦截中做触发依赖更新动作
+    - 非浅层观测情况下，如果修改的是 `ref` 值，且新值不为 `ref`，那么只改 `ref` 的 `value`
+    - 不是修改原型链上的数据时，根据该 `key` 是否存在过，触发 `ADD` 或者 `SET` 的更新
+  - `delete`对删除成功的`key`做依赖更新
+  - `has ownKeys`方法中进行依赖收集
+- `Map Set WeakMap WeakSet`使用`collectionHandlers`拦截，在`collectionHandlers`只做了`get`拦截，并让`this`指向真正
+  的`target`而不是`proxy`对象，因为在`map set`的内部实现中必须通过 `this` 才能访问它们的数据，但是通过`Reflect` 反射的时
+  候，`target` 内部的 `this` 其实是指向 `proxy` 实例的，如果使用 `Reflect` 拦截会报错
+  - `get`方法对 `key` 和 `rawKey` 进行依赖收集，使用原生方法获取值，将得到的值进行递归的依赖收集
+  - `has`对 `key` 和 `rawKey` 进行依赖收集，使用 `target` 调用 `has` 方法并返回
+  - `size`对 `ITERATE_KEY` 进行依赖收集
+  - `add`对之前没有的 `key` 进行依赖收集
+  - `set`根据是否含有 `key` 的情况，触发两种模式的依赖更新
+  - `deleteEntry` 对 `hadkey`情况触发 `delete` 依赖更新
+  - `clear` 对 `target` 的 `size` 不为 0，触发 `clear` 模式依赖更新
+
+### 1.5 ref
+
+使用`ref`对基础数据进行监听，在`vue2`中是不能的。
+
+```ts
+export function ref(value?: unknown) {
+  return createRef(value);
+}
+function createRef(rawValue: unknown, shallow = false) {
+  // 已经是ref值，返回该值
+  if (isRef(rawValue)) {
+    return rawValue;
+  }
+  return new RefImpl(rawValue, shallow);
+}
+/**
+ * 如果是对象就是用 reactive 创建响应式对象
+ */
+const convert = <T extends unknown>(val: T): T => (isObject(val) ? reactive(val) : val);
+class RefImpl<T> {
+  // get和set里使用的value
+  private _value: T;
+  // 用来判断是否是ref
+  public readonly __v_isRef = true;
+
+  constructor(private _rawValue: T, private readonly _shallow = false) {
+    //
+    this._value = _shallow ? _rawValue : convert(_rawValue);
+  }
+  // 读取value时进行依赖收集
+  get value() {
+    track(toRaw(this), TrackOpTypes.GET, "value");
+    return this._value;
+  }
+  // 设置value时触发依赖更新
+  set value(newVal) {
+    if (hasChanged(toRaw(newVal), this._rawValue)) {
+      this._rawValue = newVal;
+      this._value = this._shallow ? newVal : convert(newVal);
+      trigger(toRaw(this), TriggerOpTypes.SET, "value", newVal);
+    }
+  }
+}
+```
+
+以上，`ref`其实是返回了一个`RefImpl`类实例对象，该对象定义了属性`value`的`get set`
+
+- `get`里进行依赖收集
+- `set`时，如果新值和旧值不一样时，通知依赖更新
+
+### 1.6 computed
+
+传入一个 `getter` 函数，返回一个默认不可手动修改的 `ref` 对象。或者传入一个拥有 `get` 和 `set` 函数的对象，创建一个可手
+动修改的计算状态。
+
+```ts
+export function computed<T>(getterOrOptions: ComputedGetter<T> | WritableComputedOptions<T>) {
+  let getter: ComputedGetter<T>;
+  let setter: ComputedSetter<T>;
+
+  if (isFunction(getterOrOptions)) {
+    getter = getterOrOptions;
+    setter = __DEV__
+      ? () => {
+          console.warn("Write operation failed: computed value is readonly");
+        }
+      : NOOP;
+  } else {
+    getter = getterOrOptions.get;
+    setter = getterOrOptions.set;
+  }
+
+  return new ComputedRefImpl(getter, setter, isFunction(getterOrOptions) || !getterOrOptions.set) as any;
+}
+
+class ComputedRefImpl<T> {
+  private _value!: T;
+  private _dirty = true;
+
+  public readonly effect: ReactiveEffect<T>;
+
+  public readonly __v_isRef = true;
+  public readonly [ReactiveFlags.IS_READONLY]: boolean;
+
+  constructor(getter: ComputedGetter<T>, private readonly _setter: ComputedSetter<T>, isReadonly: boolean) {
+    // 创建了一个effect
+    this.effect = effect(getter, {
+      lazy: true,
+      // 当getter里引用的值更新触发了依赖调用，那么scheduler会被调用，触发该computed值的依赖触发
+      scheduler: () => {
+        if (!this._dirty) {
+          this._dirty = true;
+          // 所有的dep都执行时，同时触发computed的依赖更新
+          trigger(toRaw(this), TriggerOpTypes.SET, "value");
+        }
+      }
+    });
+
+    this[ReactiveFlags.IS_READONLY] = isReadonly;
+  }
+
+  get value() {
+    // _dirty为false时直接返回值，为true时执行effect()，这一步设置了activeEffect函数，在读取值后进行依赖收集
+    if (this._dirty) {
+      this._value = this.effect();
+      this._dirty = false;
+    }
+    // 读取computed值时进行依赖收集
+    track(toRaw(this), TrackOpTypes.GET, "value");
+    return this._value;
+  }
+
+  set value(newValue: T) {
+    this._setter(newValue);
+  }
+}
+```
+
+以上，`computed`传入一个`getter`函数，创建了一个`ref`
+
+- `computed`以`getter`函数创建了一个`effect`，在读取`computed`值时会调用`effect`，从而得到`activeEffect`，
+  在`value`的`get`函数中调用`track`函数收集了该 `effect`
+
+- `getter`函数里使用了其他的响应式数据，这样在读取`computed`值时，会触发其他响应式数据的 `get`拦截，从而其他的响应式数据
+  收集到了`computed`里的`effect`，在`computed.value`的 get 函数中，收集了该 `value` 的依赖
+- 当`getter`函数里的其他响应式数据更新，触发`computed`里的`effect`依赖更新，调用`effect.options.scheduler`函数，
+  在`scheduler`里触发了`computed.value`依赖更新
