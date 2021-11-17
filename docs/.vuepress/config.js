@@ -31,6 +31,7 @@ const getSideBar = () => {
       sideBar[`/${d}/`] = files;
     }
   });
+  console.log('sideBar',sideBar);
   return sideBar;
 };
 
