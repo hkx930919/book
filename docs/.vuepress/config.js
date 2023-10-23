@@ -26,9 +26,10 @@ const getSideBar = () => {
         return name.toUpperCase() === 'README' ? '' : name
       })
       .sort()
-    if (files.some(v => v)) {
+      console.log('files',files);
+    // if (files.some(v => v)) {
       sideBar[`/${d}/`] = files
-    }
+    // }
   })
   console.log('---sideBar', sideBar)
 
@@ -96,9 +97,9 @@ let config = {
     nav: [
       { text: '前端', link: '/front-docs/' },
       { text: 'nodejs', link: '/node/' },
-      //   { text: 'react-native', link: '/react-native/' },
       { text: '踩坑记录', link: '/project-book/' },
-      { text: 'linux', link: '/linux/' }
+      { text: 'linux', link: '/linux/' },
+      { text: '周计划', link: '/week-plan/' },
     ]
   },
   configureWebpack: {
@@ -111,4 +112,5 @@ let config = {
     }
   }
 }
+console.log('111sidebar',getSideBar());
 module.exports = config
